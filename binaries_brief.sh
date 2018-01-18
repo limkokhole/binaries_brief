@@ -5,8 +5,8 @@
 #3rd part: The last part will be package's description, home page, and maintainer contact.
 d='/usr/bin/';
 f=~/Downloads/mybin_usrbin_jan_18_2018.c;
-d=${d%/}'/';
-dc=${#d};
+d=${d%/}'/'; #to support path either '/' or no '/'
+dc=${#d}; #count path size
 ((dc++));
 rm "$f" 2>/dev/null;
 echo 'Start calculating total, please to be patient...';
