@@ -3,8 +3,8 @@
 #1st part: For every package name related to the valid directory files, the next line will shows its man, if any.
 #2nd part: --- valid directory files and the next line will shows its man, if any
 #3rd part: The last part will be package's description, home page, and maintainer contact.
-d='/usr/bin/';
-f=~/Downloads/mybin_usrbin_jan_18_2018.c;
+d='/sbin/';
+f=~/Downloads/mybin_sbin_jan_18_2018.c;
 d=${d%/}'/'; #to support path either '/' or no '/'
 dc=${#d}; #count path size
 ((dc++));
@@ -17,6 +17,8 @@ n=0;
 gn=0;
 contains_space=" |'";
 
+#dpkg -S produces such special cases output line(s)
+#... , only case #2 supported, the rest will ignore and shows 'multi-packages not supported...':
 #Special case 1(,): libgl1-mesa-dri:i386, libgl1-mesa-dri:amd64: /etc/drirc
 #Special case 2(:): libmagic1:amd64: /etc/magic
 #Special case 3: diversion by parallel from: /usr/bin/parallel
