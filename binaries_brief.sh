@@ -10,50 +10,78 @@ dc=${#d};
 ((dc++));
 rm "$f" 2>/dev/null;
 echo 'Start calculating total, please to be patient...';
-total="$(find $d -type f -maxdepth 1 -exec dpkg -S {} + 2> /dev/null | wc -l)";
+#total="$(find $d -maxdepth 1 -name '*parallel*' -type f -exec dpkg -S {} + 2> /dev/null | wc -l)"; #if want test custom name #1
+total="$(find $d -maxdepth 1 -type f -exec dpkg -S {} + 2> /dev/null | wc -l)"; #note that only 1 maxdepth to avoid too heavy
 pkgn='';
 n=0;
 gn=0;
-find "$d" -type f -maxdepth 1 -exec dpkg -S {} + 2> /dev/null | sort |
+contains_space=" |'";
+
+#Special case 1(,): libgl1-mesa-dri:i386, libgl1-mesa-dri:amd64: /etc/drirc
+#Special case 2(:): libmagic1:amd64: /etc/magic
+#Special case 3: diversion by parallel from: /usr/bin/parallel
+#Special case 4: diversion by parallel to: /usr/bin/parallel.moreutils
+#Special case 5: parallel, moreutils: /usr/bin/parallel
+#Special case 6: libgl1-mesa-dri:i386, libgl1-mesa-dri:amd64: /etc/drirc
+
+#find "$d" -maxdepth 1 -name '*parallel*' -type f -exec dpkg -S {} + 2> /dev/null | sort | #if want test custom name #2
+find "$d" -maxdepth 1 -type f -exec dpkg -S {} + 2> /dev/null | sort |
 	while read -r fn; do
 		((pgn=gn+1));
 		echo "[$pgn/$total] Checking... $fn";
-		pkgp="$pkgn";
-		pkgn="$(echo $fn | cut -f1 -d' ')";
-		pkgn="$(echo ${pkgn%:})";
-		pkgbp="$(echo -n $fn | cut -f2- -d' ' | awk '{$1=$1}1')";
-		pkgb="$(echo $pkgbp | cut -c$dc-)";
-		((gn++));
-		if [ "$pkgp" == "$pkgn" ]; then
-			echo -en "\n--- $pkgb" >> "$f";
-			ft="$(file -n -b -e elf $pkgbp | cut -d' ' -f1)";
-			echo -e "\t\t($ft)" >> "$f";
-			man -f "$pkgb" 2>/dev/null >> "$f";
-			if [ "$total" == "$gn" ]; then
-				echo -en '\n\n\t\t\t\t' >> "$f";
-				dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgp" >>"$f";
-				echo >> "$f";
-			fi;
-			continue;
-		fi;
-		if [ "$n" != 0 ]; then
-			echo -en '\n\n\t\t\t\t' >> "$f";
-			dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgp" >>"$f";
-			echo >> "$f";
-		fi;
-		((n++));
-		echo -n "[$n] " >> "$f";
-		echo "$pkgn" >> "$f";
-		man -f "$pkgn" 2>/dev/null >> "$f";
-		echo -en "\n--- $pkgb" >> "$f";
-		ft="$(file -n -b -e elf $pkgbp | cut -d' ' -f1)";
-		echo -e "\t\t($ft)" >> "$f";
-		man -f "$pkgb" 2>/dev/null >> "$f";
-		if [ "$total" == "$gn" ]; then
-			echo -en '\n\n\t\t\t\t' >> "$f";
-			dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgn" >>"$f";
-			echo >> "$f";
-		fi;
+        ((gn++));
+        pkgbp="$(echo -n $fn | cut -f2- -d' ' | awk '{$1=$1}1')"; #awk to strip leading path spaces
+        if [[ "$(echo $fn | cut -d':' -f1)" =~ $contains_space ]]; then
+            echo 'multi-packages not supported.';
+        elif [[ "$pkgbp" =~ $contains_space ]]; then
+            echo 'multi-packages or path contains space not supported.';
+        else 
+            pkgp="$pkgn";
+            pkgn="$(echo $fn | cut -f1 -d' ')";
+            pkgn="$(echo ${pkgn%:})"; #trim trailing :
+            pkgn="$(echo ${pkgn%,})"; #trim trailing ,
+            pkgb="$(echo $pkgbp | cut -c$dc-)";
+            if [ "$pkgp" == "$pkgn" ]; then
+                echo -en "\n--- $pkgb" >> "$f";
+                ft="$(file -n -b -e elf $pkgbp)";
+                if [ "${ft#a }" != "${ft}" ]; then
+                    ft="$(echo "$ft" | cut -d',' -f1)"
+                else
+                    ft="$(echo "$ft" | cut -d' ' -f1)"
+                fi;
+                echo -e "\t\t($ft)" >> "$f";
+                man -f "$pkgb" 2>/dev/null >> "$f";
+                if [ "$total" == "$gn" ]; then
+                    echo -en '\n\n\t\t\t\t' >> "$f";
+                    dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgp" >>"$f";
+                    echo >> "$f";
+                fi;
+                continue;
+            fi;
+            if [ "$n" != 0 ]; then
+                echo -en '\n\n\t\t\t\t' >> "$f";
+                dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgp" >>"$f";
+                echo >> "$f";
+            fi;
+            ((n++));
+            echo -n "[$n] " >> "$f";
+            echo "$pkgn" >> "$f";
+            man -f "$pkgn" 2>/dev/null >> "$f";
+            echo -en "\n--- $pkgb" >> "$f";
+            ft="$(file -n -b -e elf $pkgbp)";
+            if [ "${ft#a }" != "${ft}" ]; then
+                ft="$(echo "$ft" | cut -d',' -f1)"
+            else
+                ft="$(echo "$ft" | cut -d' ' -f1)"
+            fi;
+            echo -e "\t\t($ft)" >> "$f";
+            man -f "$pkgb" 2>/dev/null >> "$f";
+            if [ "$total" == "$gn" ]; then
+                echo -en '\n\n\t\t\t\t' >> "$f";
+                dpkg-query -W -f='${Description}\n\n${Homepage}\nMaintainer: ${Maintainer}\n\n' "$pkgn" >>"$f";
+                echo >> "$f";
+            fi;
+        fi;
 	done;
 if [ ! -f "$f" ]; then
 	echo "Sorry, no file has brief";
