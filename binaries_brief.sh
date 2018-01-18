@@ -4,7 +4,7 @@
 #2nd part: --- valid directory files and the next line will shows its man, if any
 #3rd part: The last part will be package's description, home page, and maintainer contact.
 d='/usr/bin/';
-f=~/Downloads/mybin_usrbin1.c;
+f='~/Downloads/mybin_usrbin1.c';
 d=${d%/}'/';
 dc=${#d};
 ((dc++));
