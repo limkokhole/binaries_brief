@@ -3,8 +3,8 @@
 #1st part: For every package name related to the valid directory files, the next line will shows its man, if any.
 #2nd part: --- valid directory files and the next line will shows its man, if any
 #3rd part: The last part will be package's description, home page, and maintainer contact.
-d='/sbin/';
-f=~/Downloads/mybin_sbin_jan_18_2018.c;
+d='/usr/bin/';
+f=~/Downloads/mybin_usrbin_jan_18_2018.c;
 d=${d%/}'/'; #to support path either '/' or no '/'
 dc=${#d}; #count path size
 ((dc++));
