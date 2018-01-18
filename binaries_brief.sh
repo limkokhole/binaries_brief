@@ -22,7 +22,6 @@ contains_space=" |'";
 #Special case 3: diversion by parallel from: /usr/bin/parallel
 #Special case 4: diversion by parallel to: /usr/bin/parallel.moreutils
 #Special case 5: parallel, moreutils: /usr/bin/parallel
-#Special case 6: libgl1-mesa-dri:i386, libgl1-mesa-dri:amd64: /etc/drirc
 
 #find "$d" -maxdepth 1 -name '*parallel*' -type f -exec dpkg -S {} + 2> /dev/null | sort | #if want test custom name #2
 find "$d" -maxdepth 1 -type f -exec dpkg -S {} + 2> /dev/null | sort |
@@ -44,9 +43,9 @@ find "$d" -maxdepth 1 -type f -exec dpkg -S {} + 2> /dev/null | sort |
             if [ "$pkgp" == "$pkgn" ]; then
                 echo -en "\n--- $pkgb" >> "$f";
                 ft="$(file -n -b -e elf $pkgbp)";
-                if [ "${ft#a }" != "${ft}" ]; then
+                if [ "${ft#a }" != "${ft}" ]; then #some files return something like 'a /usr/bin/python script', nid split by ',' for this case.
                     ft="$(echo "$ft" | cut -d',' -f1)"
-                else
+                else #to reduce noise, all split by space and shows 1st word only.
                     ft="$(echo "$ft" | cut -d' ' -f1)"
                 fi;
                 echo -e "\t\t($ft)" >> "$f";
