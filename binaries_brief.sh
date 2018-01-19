@@ -5,7 +5,7 @@
 #3rd part: The last part will be package's description, home page, and maintainer contact.
 d='/usr/bin/';
 f=~/Downloads/mybin_usrbin_jan_18_2018.c;
-d=${d%/}'/'; #to support path either '/' or no '/'
+d=${d%/}'/'; #to support trailing path either '/' or no '/'
 dc=${#d}; #count path size
 ((dc++));
 rm "$f" 2>/dev/null;
@@ -15,7 +15,7 @@ total="$(find $d -maxdepth 1 -type f -exec dpkg -S {} + 2> /dev/null | wc -l)"; 
 pkgn='';
 n=0;
 gn=0;
-contains_space=" |'";
+contains_space=" ";
 
 #dpkg -S produces such special cases output line(s)
 #... , only case #2 supported, the rest will ignore and shows 'multi-packages not supported...':
